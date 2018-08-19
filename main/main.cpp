@@ -20,6 +20,7 @@
  */
 #include <libwebsockets.h>
 #include <nvs_flash.h>
+#include <M5Stack.h>
 
 /*
  * Configuration for normal station website
@@ -62,10 +63,24 @@ static const struct lws_protocol_vhost_options pvo_headers = {
 
 /* reset to factory mount */
 static const struct lws_http_mount mount_station_rtf = {
-	.mountpoint		= "/esp32-rtf",
-	.origin			= "esplws-rtf",
-	.origin_protocol	= LWSMPRO_CALLBACK,
-	.mountpoint_len		= 10,
+	NULL, // mount_next
+	"/esp32-rtf", // mountpoint
+	"esplws-rtf", // origin
+	NULL, // def
+	NULL, // protocol
+	NULL, // cgienv
+	NULL, // extra_mimetypes
+	NULL, // interpret
+	0, // cgi_timeout
+	0, // cache_max_age
+	0, // auth_mask
+	0, // cache_reusable
+	0, // cache_revalidate,
+	0, // cache_intermediaries
+	LWSMPRO_CALLBACK, // origin_protocol
+	10, // mountpoint_len
+	NULL, // basic_auth_login_file
+	NULL // _unused
 };
 
 /*
@@ -73,23 +88,48 @@ static const struct lws_http_mount mount_station_rtf = {
  * the "protocol-post-demo" plugin protocol for handling
  */
 static const struct lws_http_mount mount_station_post = {
-	.mount_next		= &mount_station_rtf,
-	.mountpoint		= "/formtest",
-	.origin			= "protocol-post-demo",
-	.origin_protocol	= LWSMPRO_CALLBACK,
-	.mountpoint_len		= 9,
+	&mount_station_rtf, // mount_next
+	"/formtest", // mountpoint
+	"protocol-post-demo", // origin
+	NULL, // def
+	NULL, // protocol
+	NULL, // cgienv
+	NULL, // extra_mimetypes
+	NULL, // interpret
+	0, // cgi_timeout
+	0, // cache_max_age
+	0, // auth_mask
+	0, // cache_reusable
+	0, // cache_revalidate,
+	0, // cache_intermediaries
+	LWSMPRO_CALLBACK, // origin_protocol
+	9, // mountpoint_len
+	NULL, // basic_auth_login_file
+	NULL // _unused
 };
 
 /*
  * this serves "/station/..." in the romfs at "/" in the URL namespace
  */
 static const struct lws_http_mount mount_station = {
-        .mount_next		= &mount_station_post,
-        .mountpoint		= "/",
-        .origin			= "/station",
-        .def			= "test.html",
-        .origin_protocol	= LWSMPRO_FILE,
-        .mountpoint_len		= 1,
+  &mount_station_post, // mount_next
+  "/", // mountpoint
+  "/station", // origin
+  "test.html", // def
+	NULL, // protocol
+	NULL, // cgienv
+	NULL, // extra_mimetypes
+	NULL, // interpret
+	0, // cgi_timeout
+	0, // cache_max_age
+	0, // auth_mask
+	0, // cache_reusable
+	0, // cache_revalidate,
+	0, // cache_intermediaries
+  LWSMPRO_FILE, // origin_protocol
+  1, // mountpoint_len
+	NULL, // basic_auth_login_file
+	NULL // _unused
 };
 
 /*
@@ -100,14 +140,24 @@ static const struct lws_http_mount mount_station = {
  * See below how the password is set
  */
 static const struct lws_http_mount mount_station_needs_auth = {
-        .mount_next		= &mount_station,
-        .mountpoint		= "/secret",
-        .origin			= "/secret",
-        .def			= "index.html",
-        .origin_protocol	= LWSMPRO_FILE,
-        .mountpoint_len		= 7,
-
-	.basic_auth_login_file	= "lwsdemoba", /* esp32 nvs realm to use */
+  &mount_station, // mount_next
+  "/secret", // mountpoint
+  "/secret", // origin
+  "index.html", // def
+	NULL, // protocol
+	NULL, // cgienv
+	NULL, // extra_mimetypes
+	NULL, // interpret
+	0, // cgi_timeout
+	0, // cache_max_age
+	0, // auth_mask
+	0, // cache_reusable
+	0, // cache_revalidate,
+	0, // cache_intermediaries
+  LWSMPRO_FILE, // origin_protocol
+  7, // mountpoint_len
+	"lwsdemoba", /* basic_auth_login_file, esp32 nvs realm to use */
+	NULL // _unused
 };
 
 
@@ -139,7 +189,7 @@ void lws_esp32_leds_timer_cb(TimerHandle_t th)
 }
 
 
-void app_main(void)
+extern "C" void app_main(void)
 {
 	static struct lws_context_creation_info info;
 	struct lws_context *context;
