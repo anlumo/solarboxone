@@ -20,6 +20,9 @@
  */
 #include <libwebsockets.h>
 #include <nvs_flash.h>
+#include <Arduino.h>
+#undef min
+#undef max
 #include <M5Stack.h>
 
 /*
